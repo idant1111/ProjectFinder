@@ -28,7 +28,7 @@ a TUI tool for finding the code project lost in your system
 First, clone the repository from GitHub:
 
 ```bash
-git clone https://github.com/your-username/ProjectFinder.git
+git clone https://github.com/idant1111/ProjectFinder.git
 cd ProjectFinder
 ```
 
@@ -40,7 +40,13 @@ pip install -r requirements.txt
 ```
 Note: The tool uses send2trash for safely moving directories to the recycle bin. This package will be installed with the dependencies.
 
+Install tool:
+```
+from inside the dir where setup.py is:
 
+python3 -m pip install -e . 
+
+```
 ## Usage
 ### Scan for Projects
 You can scan your system or a specific directory for projects:
