@@ -76,15 +76,15 @@ projectfinder show_index --sort-by name
 ```
 
 ### Manage Projects
-After viewing the indexed projects, you can select a project to manage:
+- After viewing the indexed projects, you can select a project to manage:
 
 -- Open Folder in File Explorer:
 
-After selecting a project ID, choose open to open the directory in your system's file explorer.
+- After selecting a project ID, choose open to open the directory in your system's file explorer.
 
 -- Print Working Directory (pwd):
 
-After selecting a project ID, choose pwd to print the absolute path of the project.
+- After selecting a project ID, choose pwd to print the absolute path of the project.
 
 -- Move Directory to Recycle Bin:
 
@@ -95,13 +95,14 @@ You can clear the entire project index if needed:
 
 ```
 projectfinder clear
-Dependencies
+```
+## Dependencies
+```
 Rich: For formatting the CLI output.
 TQDM: For showing progress bars during scanning.
 Send2Trash: For safely moving files and directories to the recycle bin.
 Contributing
 Contributions are welcome! Please submit a pull request or open an issue to discuss your ideas.
 ```
-
-License
+## License
 This project is licensed under the MIT License.
