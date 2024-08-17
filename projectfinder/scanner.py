@@ -1,173 +1,116 @@
 import os
-import platform
-import subprocess
-from send2trash import send2trash
+import json
+from tqdm import tqdm
 
-import click
-from rich.console import Console
-from rich.panel import Panel
-from rich.prompt import Prompt
-from rich.table import Table
-from rich.text import Text
+INDEX_FILE = "project_index.json"
 
-from .scanner import scan_directories, load_index, clear_index
+# Directories and files to ignore
+IGNORED_DIRS = {
+    'node_modules', 'vendor', '.venv', 'env', '__pycache__',
+    'dist', 'build', 'Library', 'System', 'bin', 'usr', 'Applications',
+    '.git', '.idea', '.vscode', 'anaconda3', '.npm', '.nvm', '.cache',
+    '.local', '.conda', 'AppData', 'Program Files', 'Visual Studio Code.app'
+}
 
-ASCII_ART = """
- _____                                                                     _____ 
-( ___ )                                                                   ( ___ )
- |   |~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|   | 
- |   | ooooooooo.                          o8o                         .   |   | 
- |   | `888   `Y88.                        `"'                       .o8   |   | 
- |   |  888   .d88' oooo d8b  .ooooo.     oooo  .ooooo.   .ooooo.  .o888oo |   | 
- |   |  888ooo88P'  `888""8P d88' `88b    `888 d88' `88b d88' `"Y8   888   |   | 
- |   |  888          888     888   888     888 888ooo888 888         888   |   | 
- |   |  888          888     888   888     888 888    .o 888   .o8   888 . |   | 
- |   | o888o        d888b    `Y8bod8P'     888 `Y8bod8P' `Y8bod8P'   "888" |   | 
- |   |                                     888                             |   | 
- |   |                                 .o. 88P                             |   | 
- |   | oooooooooooo  o8o               `Y888.o8                            |   | 
- |   | `888'     `8  `"'                   "888                            |   | 
- |   |  888         oooo  ooo. .oo.    .oooo888   .ooooo.  oooo d8b        |   | 
- |   |  888oooo8    `888  `888P"Y88b  d88' `888  d88' `88b `888""8P        |   | 
- |   |  888    "     888   888   888  888   888  888ooo888  888            |   | 
- |   |  888          888   888   888  888   888  888    .o  888            |   | 
- |   | o888o        o888o o888o o888o `Y8bod88P" `Y8bod8P' d888b           |   | 
- |___|~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|___| 
-(_____)                                                                   (_____)
-"""
+# Directories where paths should be truncated
+TRUNCATE_AT_DIRS = {'lib'}
 
-@click.group()
-def cli():
-    """Main command group for the ProjectFinder CLI."""
-    console = Console()
-    console.print(Panel(Text(ASCII_ART, justify="center", style="bold cyan")))
-    console.print("Welcome to ProjectFinder!\n", style="bold green")
+# Project indicators and their corresponding types
+PROJECT_INDICATORS = {
+    'package.json': 'Node.js',
+    'pyproject.toml': 'Python',
+    'setup.py': 'Python',
+    'Cargo.toml': 'Rust',
+    'go.mod': 'Go',
+    'pom.xml': 'Java (Maven)',
+    'build.gradle': 'Java (Gradle)',
+    'CMakeLists.txt': 'CMake',
+    'composer.json': 'PHP',
+    'Gemfile': 'Ruby',
+    'mix.exs': 'Elixir',
+    '.git': 'Git Repository',
+    'Makefile': 'C/C++',
+    'main.c': 'C',
+    'main.cpp': 'C++',
+    'build.xml': 'Ant',
+    'build.sbt': 'Scala (SBT)',
+    'pubspec.yaml': 'Dart (Flutter)',
+    'Project.swift': 'Swift',
+    'Package.swift': 'Swift',
+    'Main.swift': 'Swift',
+    'init.lua': 'Lua',
+    'main.lua': 'Lua',
+    'rockspec': 'Lua (Luarocks)',
+}
 
-@cli.command()
-@click.option('--system-wide', is_flag=True, help=
-              "Scan the entire system starting from the home directory.")
-@click.argument('directory', required=False, type=click.Path(exists=True))
-def scan(system_wide, directory):
-    """
-    Scan for project directories either from the root directory or from a specified directory.
-    """
-    console = Console()
+def get_project_type(path):
+    """Determine the project type based on known project files."""
+    for indicator, project_type in PROJECT_INDICATORS.items():
+        if os.path.exists(os.path.join(path, indicator)):
+            return project_type
+    return 'Unknown'
 
-    if system_wide:
-        base_directory = os.path.expanduser("~")
-    elif directory:
-        base_directory = directory
-    else:
-        console.print(
-            """
-            [bold red]Error:[/bold red] You must specify either:
-            --system-wide for a full scan or provide a directory to scan.
-            """)
-        return
+def should_truncate_path(path):
+    """Check if the path should be truncated based on predefined directories."""
+    return any(dir_name in path.split(os.sep) for dir_name in TRUNCATE_AT_DIRS)
 
-    projects = scan_directories(base_directory)
+def save_index(projects):
+    """Save the project index to a JSON file."""
+    with open(INDEX_FILE, 'w', encoding='utf-8') as file:
+        json.dump(projects, file, indent=4)
 
-    if not projects:
-        console.print(f"[bold red]No projects found in {base_directory}.[/bold red]")
-        return
+def load_index():
+    """Load the project index from a JSON file."""
+    if os.path.exists(INDEX_FILE):
+        with open(INDEX_FILE, 'r', encoding='utf-8') as file:
+            return json.load(file)
+    return []
 
-    display_index(console, projects)
+def clear_index():
+    """Clear the project index file."""
+    if os.path.exists(INDEX_FILE):
+        os.remove(INDEX_FILE)
 
-@cli.command()
-def clear():
-    """Clear the stored project index."""
-    clear_index()
-    console = Console()
-    console.print("Project index has been cleared.", style="bold green")
+def is_duplicate(project, existing_projects):
+    """Check if the project is already in the index."""
+    return any(project["path"] == existing_project["path"] for existing_project in existing_projects)
 
-@cli.command()
-@click.option('--search', '-s', help="Search the index by directory name, project type, or path.")
-@click.option('--sort-by', '-b', type=click.Choice(
-    ['name', 'type', 'path'], case_sensitive=False), help=
-    "Sort the index by directory name, project type, or path.")
-def show_index(search, sort_by):
-    """Display the current project index in a table, with options to search and sort."""
-    console = Console()
-    projects = load_index()
+def scan_directories(base_directory):
+    """Recursively scan the base directory to find top-level project directories with a progress bar."""
+    projects = load_index()  # Load existing index
+    unique_projects = set()
 
-    if not projects:
-        console.print("[bold red]No projects are currently indexed.[/bold red]")
-        return
+    total_dirs = sum(len(dirs) for _, dirs, _ in os.walk(base_directory)) + 1  # Counting total directories for the progress bar
 
-    if search:
-        search_lower = search.lower()
-        projects = [project for project in projects if search_lower in project[
-            "directory_name"
-            ].lower() or search_lower in project[
-                "project_type"
-                ].lower() or search_lower in project["path"].lower()]
+    with tqdm(total=total_dirs, desc="Scanning directories", unit="dir") as pbar:
+        for root, dirs, _ in os.walk(base_directory):
+            pbar.set_postfix(current_directory=root)
 
-    if sort_by:
-        projects = sorted(projects, key=lambda x: x[sort_by].lower())
+            # Skip ignored directories
+            dirs[:] = [d for d in dirs if d not in IGNORED_DIRS]
 
-    display_index(console, projects)
+            # Truncate paths at specified directories
+            if should_truncate_path(root):
+                continue
 
-def display_index(console, projects):
-    """Display the indexed projects in a table."""
-    table = Table(show_header=True, header_style="bold magenta")
-    table.add_column("ID", style="dim", width=6)
-    table.add_column("Name", style="cyan", no_wrap=True)
-    table.add_column("Project Type", style="green", no_wrap=True)
-    table.add_column("Path", style="magenta")
+            # Check current directory for project indicators
+            project_type = get_project_type(root)
 
-    for idx, project in enumerate(projects):
-        table.add_row(str(idx), project[
-            "directory_name"
-            ], project[
-                "project_type"
-                ], project[
-                    "path"
-                    ])
+            # If current directory is a project directory, add it to the list
+            if project_type != 'Unknown':
+                project_path = os.path.abspath(root)
+                new_project = {
+                    "directory_name": os.path.basename(project_path),
+                    "project_type": project_type,
+                    "path": project_path
+                }
 
-    console.print(table)
+                # Check for duplicates before adding to the list
+                if not is_duplicate(new_project, projects):
+                    unique_projects.add(project_path)
+                    projects.append(new_project)
 
-    selected_id = Prompt.ask(
-        "[bold green]Select the project ID to manage[/bold green]",
-        choices=[str(i) for i in range(len(projects))])
-    selected_project = projects[int(selected_id)]
+            pbar.update(1)
     
-    action = Prompt.ask(
-        f"""[bold green]Selected project:[/bold green]
-        {selected_project['directory_name']} [bold green](
-            {selected_project['path']}
-            )[/bold green]\n[bold yellow]Choose an action[/bold yellow]""",
-        choices=["open", "pwd", "remove"]
-    )
-
-    if action == "open":
-        open_folder(selected_project["path"])
-    elif action == "pwd":
-        console.print(f"[bold green]Path:[/bold green] {selected_project['path']}")
-    elif action == "remove":
-        confirm = Prompt.ask("""[bold red]Are you sure you want to move
-                             this directory to the recycle bin? (yes/no)[/bold red]""",
-                             choices=["yes", "no"])
-        if confirm == "yes":
-            move_to_recycle_bin(selected_project["path"], console)
-        else:
-            console.print("[bold green]Operation cancelled.[/bold green]")
-
-def open_folder(path):
-    """Open the selected folder in the system's file explorer."""
-    if platform.system() == "Windows":
-        os.startfile(path)
-    elif platform.system() == "Darwin":
-        subprocess.Popen(["open", path])
-    else:
-        subprocess.Popen(["xdg-open", path])
-
-def move_to_recycle_bin(path, console):
-    """Move the selected folder to the recycle bin."""
-    try:
-        send2trash(path)
-        console.print(f"[bold red]Moved to recycle bin:[/bold red] {path}")
-    except Exception as e:
-        console.print(f"[bold red]Error moving to recycle bin:[/bold red] {e}")
-
-if __name__ == "__main__":
-    cli()
+    save_index(projects)  # Save updated index
+    return projects
