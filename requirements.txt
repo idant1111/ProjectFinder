@@ -1,4 +1,4 @@
 click==8.1.3       # For building CLI commands
 rich==13.3.0       # For building the TUI and colorful output
-tqdm==4.66.5
-send2trash == 1.8.3
+tqdm==4.66.5       # For progress-bar
+send2trash == 1.8.3 # For sending junk to the Recycle bin
