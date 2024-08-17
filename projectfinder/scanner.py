@@ -132,13 +132,10 @@ def display_index(console, projects):
     selected_project = projects[int(selected_id)]
     
     action = Prompt.ask(
-        f"[bold green]Selected project:[/bold green]{
-            selected_project[
-                'directory_name'
-                ]
-                }[bold green](
-                    {selected_project['path']}
-                    )[/bold green]\n[bold yellow]Choose an action[/bold yellow]",
+        f"""[bold green]Selected project:[/bold green]
+        {selected_project['directory_name']} [bold green](
+            {selected_project['path']}
+            )[/bold green]\n[bold yellow]Choose an action[/bold yellow]""",
         choices=["open", "pwd", "remove"]
     )
 
@@ -147,11 +144,9 @@ def display_index(console, projects):
     elif action == "pwd":
         console.print(f"[bold green]Path:[/bold green] {selected_project['path']}")
     elif action == "remove":
-        confirm = Prompt.ask(
-            """
-            [bold red]Are you sure you want to move this
-            directory to the recycle bin? (yes/no)[/bold red]"""
-            , choices=["yes", "no"])
+        confirm = Prompt.ask("""[bold red]Are you sure you want to move
+                             this directory to the recycle bin? (yes/no)[/bold red]""",
+                             choices=["yes", "no"])
         if confirm == "yes":
             move_to_recycle_bin(selected_project["path"], console)
         else:
