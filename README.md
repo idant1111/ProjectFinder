@@ -84,19 +84,19 @@ projectfinder show_index --sort-by name
 ### Manage Projects
 - After viewing the indexed projects, you can select a project to manage:
 
--- Open Folder in File Explorer:
+Open Folder in File Explorer:
 
 - After selecting a project ID, choose open to open the directory in your system's file explorer.
 
--- Print Working Directory (pwd):
+Print Working Directory (pwd):
 
 - After selecting a project ID, choose pwd to print the absolute path of the project.
 
--- Move Directory to Recycle Bin:
+Move Directory to Recycle Bin:
 
 After selecting a project ID, choose remove to move the directory to the recycle bin. You will be prompted for confirmation.
 
--- Clear the Project Index
+Clear the Project Index
 You can clear the entire project index if needed:
 
 ```
