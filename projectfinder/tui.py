@@ -6,7 +6,8 @@ def display_projects(projects):
     Display the list of projects in a TUI with their type and path.
     
     Args:
-        projects (list): List of project dictionaries containing 'directory_name', 'project_type', and 'path'.
+        projects (list): List of project dictionaries containing 
+        'directory_name', 'project_type', and 'path'.
     
     Returns:
         int: The index of the selected project.
@@ -27,7 +28,9 @@ def display_projects(projects):
             selected_index = int(console.input("[bold green]Select a project by index: [/bold green]"))
             if 0 <= selected_index < len(projects):
                 return selected_index
-            else:
-                console.print(f"[bold red]Invalid index. Please enter a number between 0 and {len(projects) - 1}.[/bold red]")
+            console.print(f"""[bold red]Invalid index.
+                          Please enter a number between 0 and {len(projects) - 1}.[/bold red]
+                          """
+                          )
         except ValueError:
             console.print("[bold red]Invalid input. Please enter a valid number.[/bold red]")
