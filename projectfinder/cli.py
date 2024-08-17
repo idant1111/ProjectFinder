@@ -1,3 +1,6 @@
+"""
+cli.py
+"""
 import os
 import platform
 import subprocess
