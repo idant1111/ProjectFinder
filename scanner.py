@@ -13,10 +13,10 @@ IGNORED_DIRS = {
     'Visual Studio Code.app'
 }
 
-# Directories where paths should be truncated
+
 TRUNCATE_AT_DIRS = {'lib'}
 
-# Project indicators and their corresponding types
+# Project indicators
 PROJECT_INDICATORS = {
     'package.json': 'Node.js',
     'pyproject.toml': 'Python',
@@ -81,14 +81,13 @@ def scan_directories(base_directory):
         for root, dirs, files in os.walk(base_directory):
             pbar.set_postfix(current_directory=root)
 
-            # Skip ignored directories
+            # Skip ignored dirs
             dirs[:] = [d for d in dirs if d not in IGNORED_DIRS]
 
-            # Truncate paths at specified directories
+            # Truncate paths
             if should_truncate_path(root):
                 continue
 
-            # Check current directory for project indicators
             project_type = get_project_type(root)
 
             # If current directory is a project directory, add it to the list
@@ -107,5 +106,5 @@ def scan_directories(base_directory):
 
             pbar.update(1)
     
-    save_index(projects)  # Save updated index
+    save_index(projects) 
     return projects
