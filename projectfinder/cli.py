@@ -44,7 +44,8 @@ def cli():
     console.print("Welcome to ProjectFinder!\n", style="bold green")
 
 @cli.command()
-@click.option('--system-wide', is_flag=True, help="Scan the entire system starting from the home directory.")
+@click.option('--system-wide', is_flag=True, help=
+              "Scan the entire system starting from the home directory.")
 @click.argument('directory', required=False, type=click.Path(exists=True))
 def scan(system_wide, directory):
     """
@@ -57,7 +58,11 @@ def scan(system_wide, directory):
     elif directory:
         base_directory = directory
     else:
-        console.print("[bold red]Error:[/bold red] You must specify either --system-wide for a full scan or provide a directory to scan.")
+        console.print(
+            """
+            [bold red]Error:[/bold red] You must specify either:
+            --system-wide for a full scan or provide a directory to scan.
+            """)
         return
 
     projects = scan_directories(base_directory)
@@ -77,7 +82,9 @@ def clear():
 
 @cli.command()
 @click.option('--search', '-s', help="Search the index by directory name, project type, or path.")
-@click.option('--sort-by', '-b', type=click.Choice(['name', 'type', 'path'], case_sensitive=False), help="Sort the index by directory name, project type, or path.")
+@click.option('--sort-by', '-b', type=click.Choice(
+    ['name', 'type', 'path'], case_sensitive=False), help=
+    "Sort the index by directory name, project type, or path.")
 def show_index(search, sort_by):
     """Display the current project index in a table, with options to search and sort."""
     console = Console()
@@ -89,7 +96,11 @@ def show_index(search, sort_by):
 
     if search:
         search_lower = search.lower()
-        projects = [project for project in projects if search_lower in project["directory_name"].lower() or search_lower in project["project_type"].lower() or search_lower in project["path"].lower()]
+        projects = [project for project in projects if search_lower in project[
+            "directory_name"
+            ].lower() or search_lower in project[
+                "project_type"
+                ].lower() or search_lower in project["path"].lower()]
 
     if sort_by:
         projects = sorted(projects, key=lambda x: x[sort_by].lower())
@@ -105,15 +116,26 @@ def display_index(console, projects):
     table.add_column("Path", style="magenta")
 
     for idx, project in enumerate(projects):
-        table.add_row(str(idx), project["directory_name"], project["project_type"], project["path"])
+        table.add_row(str(idx), project[
+            "directory_name"
+            ], project[
+                "project_type"
+                ], project[
+                    "path"
+                    ])
 
     console.print(table)
 
-    selected_id = Prompt.ask("[bold green]Select the project ID to manage[/bold green]", choices=[str(i) for i in range(len(projects))])
+    selected_id = Prompt.ask(
+        "[bold green]Select the project ID to manage[/bold green]",
+        choices=[str(i) for i in range(len(projects))])
     selected_project = projects[int(selected_id)]
     
     action = Prompt.ask(
-        f"[bold green]Selected project:[/bold green] {selected_project['directory_name']} [bold green]({selected_project['path']})[/bold green]\n[bold yellow]Choose an action[/bold yellow]",
+        f"""[bold green]Selected project:[/bold green]
+        {selected_project['directory_name']} [bold green](
+            {selected_project['path']}
+            )[/bold green]\n[bold yellow]Choose an action[/bold yellow]""",
         choices=["open", "pwd", "remove"]
     )
 
@@ -122,7 +144,9 @@ def display_index(console, projects):
     elif action == "pwd":
         console.print(f"[bold green]Path:[/bold green] {selected_project['path']}")
     elif action == "remove":
-        confirm = Prompt.ask("[bold red]Are you sure you want to move this directory to the recycle bin? (yes/no)[/bold red]", choices=["yes", "no"])
+        confirm = Prompt.ask("""[bold red]Are you sure you want to move
+                             this directory to the recycle bin? (yes/no)[/bold red]""",
+                             choices=["yes", "no"])
         if confirm == "yes":
             move_to_recycle_bin(selected_project["path"], console)
         else:
