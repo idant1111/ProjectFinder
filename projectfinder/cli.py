@@ -1,7 +1,7 @@
 import os
 import platform
 import subprocess
-from send2trash import send2trash
+import send2trash
 
 import click
 from rich.console import Console
@@ -130,7 +130,6 @@ def display_index(console, projects):
         "[bold green]Select the project ID to manage[/bold green]",
         choices=[str(i) for i in range(len(projects))])
     selected_project = projects[int(selected_id)]
-    
     action = Prompt.ask(
         f"""[bold green]Selected project:[/bold green]
         {selected_project['directory_name']} [bold green](
