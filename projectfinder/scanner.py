@@ -30,6 +30,19 @@ PROJECT_INDICATORS = {
     'Gemfile': 'Ruby',
     'mix.exs': 'Elixir',
     '.git': 'Git Repository',
+    'Makefile': 'C/C++',
+    'main.c': 'C',
+    'main.cpp': 'C++',
+    'CMakeLists.txt': 'CMake',
+    'build.xml': 'Ant',
+    'build.sbt': 'Scala (SBT)',
+    'pubspec.yaml': 'Dart (Flutter)',
+    'Project.swift': 'Swift',
+    'Package.swift': 'Swift',
+    'Main.swift': 'Swift',
+    'init.lua': 'Lua',
+    'main.lua': 'Lua',
+    'rockspec': 'Lua (Luarocks)',
 }
 
 def get_project_type(path):
@@ -41,21 +54,18 @@ def get_project_type(path):
 
 def should_truncate_path(path):
     """Check if the path should be truncated based on predefined directories."""
-    for dir_name in TRUNCATE_AT_DIRS:
-        if dir_name in path.split(os.sep):
-            return True
-    return False
+    return any(dir_name in path.split(os.sep) for dir_name in TRUNCATE_AT_DIRS)
 
 def save_index(projects):
     """Save the project index to a JSON file."""
-    with open(INDEX_FILE, 'w') as f:
-        json.dump(projects, f, indent=4)
+    with open(INDEX_FILE, 'w', encoding='utf-8') as file:
+        json.dump(projects, file, indent=4)
 
 def load_index():
     """Load the project index from a JSON file."""
     if os.path.exists(INDEX_FILE):
-        with open(INDEX_FILE, 'r') as f:
-            return json.load(f)
+        with open(INDEX_FILE, 'r', encoding='utf-8') as file:
+            return json.load(file)
     return []
 
 def clear_index():
@@ -65,20 +75,17 @@ def clear_index():
 
 def is_duplicate(project, existing_projects):
     """Check if the project is already in the index."""
-    for existing_project in existing_projects:
-        if project["path"] == existing_project["path"]:
-            return True
-    return False
+    return any(project["path"] == existing_project["path"] for existing_project in existing_projects)
 
 def scan_directories(base_directory):
     """Recursively scan the base directory to find top-level project directories with a progress bar."""
     projects = load_index()  # Load existing index
     unique_projects = set()
 
-    total_dirs = sum([len(dirs) for _, dirs, _ in os.walk(base_directory)]) + 1  # Counting total directories for the progress bar
+    total_dirs = sum(len(dirs) for _, dirs, _ in os.walk(base_directory)) + 1  # Counting total directories for the progress bar
 
     with tqdm(total=total_dirs, desc="Scanning directories", unit="dir") as pbar:
-        for root, dirs, files in os.walk(base_directory):
+        for root, dirs, _ in os.walk(base_directory):
             pbar.set_postfix(current_directory=root)
 
             # Skip ignored directories

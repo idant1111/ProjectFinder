@@ -1,22 +1,20 @@
-import click
-from .scanner import scan_directories, load_index, save_index, clear_index
-from .tui import display_projects
 import os
-from rich.console import Console
-from rich.prompt import Prompt
-from rich.panel import Panel
-from rich.text import Text
-from rich.table import Table
-from .scanner import scan_directories, clear_index, load_index
-
-import shutil
 import platform
+import shutil
 import subprocess
 from send2trash import send2trash
 
+import click
+from rich.console import Console
+from rich.panel import Panel
+from rich.prompt import Prompt
+from rich.table import Table
+from rich.text import Text
+
+from .scanner import scan_directories, load_index, save_index, clear_index
+from .tui import display_projects
+
 ASCII_ART = """
-
-
  _____                                                                     _____ 
 ( ___ )                                                                   ( ___ )
  |   |~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|   | 
@@ -38,16 +36,11 @@ ASCII_ART = """
  |   | o888o        o888o o888o o888o `Y8bod88P" `Y8bod8P' d888b           |   | 
  |___|~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|___| 
 (_____)                                                                   (_____)
-
 """
-
-def cli():
-    console = Console()
-    console.print(Panel(Text(ASCII_ART, justify="center", style="bold cyan")))
-    console.print("Welcome to ProjectFinder!\n", style="bold green")
 
 @click.group()
 def cli():
+    """Main command group for the ProjectFinder CLI."""
     console = Console()
     console.print(Panel(Text(ASCII_ART, justify="center", style="bold cyan")))
     console.print("Welcome to ProjectFinder!\n", style="bold green")
@@ -56,11 +49,12 @@ def cli():
 @click.option('--system-wide', is_flag=True, help="Scan the entire system starting from the home directory.")
 @click.argument('directory', required=False, type=click.Path(exists=True))
 def scan(system_wide, directory):
-    """Scan for project directories either from the root directory or from a specified directory."""
-
+    """
+    Scan for project directories either from the root directory or from a specified directory.
+    """
     console = Console()
 
-    # Select running mode
+    # Determine base directory for scanning
     if system_wide:
         base_directory = os.path.expanduser("~")  # Start scanning from the home directory
     elif directory:
@@ -80,7 +74,9 @@ def scan(system_wide, directory):
 
 @cli.command()
 def clear():
-    """Clear the stored project index."""
+    """
+    Clear the stored project index.
+    """
     clear_index()
     console = Console()
     console.print("Project index has been cleared.", style="bold green")
@@ -89,7 +85,9 @@ def clear():
 @click.option('--search', '-s', help="Search the index by directory name, project type, or path.")
 @click.option('--sort-by', '-b', type=click.Choice(['name', 'type', 'path'], case_sensitive=False), help="Sort the index by directory name, project type, or path.")
 def show_index(search, sort_by):
-    """Display the current project index in a table, with options to search and sort."""
+    """
+    Display the current project index in a table, with options to search and sort.
+    """
     console = Console()
     projects = load_index()
 
@@ -104,17 +102,14 @@ def show_index(search, sort_by):
 
     # Apply sorting if specified
     if sort_by:
-        if sort_by == 'name':
-            projects = sorted(projects, key=lambda x: x["directory_name"].lower())
-        elif sort_by == 'type':
-            projects = sorted(projects, key=lambda x: x["project_type"].lower())
-        elif sort_by == 'path':
-            projects = sorted(projects, key=lambda x: x["path"].lower())
+        projects = sorted(projects, key=lambda x: x[sort_by].lower())
 
     display_index(console, projects)
 
 def display_index(console, projects):
-    """Display the indexed projects in a table."""
+    """
+    Display the indexed projects in a table.
+    """
     table = Table(show_header=True, header_style="bold magenta")
     table.add_column("ID", style="dim", width=6)
     table.add_column("Name", style="cyan", no_wrap=True)
@@ -147,7 +142,9 @@ def display_index(console, projects):
                 console.print("[bold green]Operation cancelled.[/bold green]")
 
 def open_folder(path):
-    """Open the selected folder in the system's file explorer."""
+    """
+    Open the selected folder in the system's file explorer.
+    """
     if platform.system() == "Windows":
         os.startfile(path)
     elif platform.system() == "Darwin":
@@ -156,7 +153,9 @@ def open_folder(path):
         subprocess.Popen(["xdg-open", path])
 
 def move_to_recycle_bin(path, console):
-    """Move the selected folder to the recycle bin."""
+    """
+    Move the selected folder to the recycle bin.
+    """
     try:
         send2trash(path)
         console.print(f"[bold red]Moved to recycle bin:[/bold red] {path}")
