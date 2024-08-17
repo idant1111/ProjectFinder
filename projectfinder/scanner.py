@@ -73,29 +73,29 @@ def clear_index():
 
 def is_duplicate(project, existing_projects):
     """Check if the project is already in the index."""
-    return any(project["path"] == existing_project["path"] for existing_project in existing_projects)
+    return any(
+        project["path"] == existing_project["path"] for existing_project in existing_projects
+        )
 
 def scan_directories(base_directory):
-    """Recursively scan the base directory to find top-level project directories with a progress bar."""
+    """
+    Recursively scan the base directory to find
+    top-level project directories with a progress bar.
+     """
     projects = load_index()  # Load existing index
     unique_projects = set()
-
-    total_dirs = sum(len(dirs) for _, dirs, _ in os.walk(base_directory)) + 1  # Counting total directories for the progress bar
-
+    # Counting total directories for the progress bar
+    total_dirs = sum(len(dirs) for _, dirs, _ in os.walk(base_directory)) + 1  
     with tqdm(total=total_dirs, desc="Scanning directories", unit="dir") as pbar:
         for root, dirs, _ in os.walk(base_directory):
             pbar.set_postfix(current_directory=root)
-
             # Skip ignored directories
             dirs[:] = [d for d in dirs if d not in IGNORED_DIRS]
-
             # Truncate paths at specified directories
             if should_truncate_path(root):
                 continue
-
             # Check current directory for project indicators
             project_type = get_project_type(root)
-
             # If current directory is a project directory, add it to the list
             if project_type != 'Unknown':
                 project_path = os.path.abspath(root)
@@ -104,13 +104,10 @@ def scan_directories(base_directory):
                     "project_type": project_type,
                     "path": project_path
                 }
-
                 # Check for duplicates before adding to the list
                 if not is_duplicate(new_project, projects):
                     unique_projects.add(project_path)
                     projects.append(new_project)
-
             pbar.update(1)
-    
     save_index(projects)  # Save updated index
     return projects
