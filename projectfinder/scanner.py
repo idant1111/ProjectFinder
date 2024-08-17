@@ -8,9 +8,8 @@ INDEX_FILE = "project_index.json"
 IGNORED_DIRS = {
     'node_modules', 'vendor', '.venv', 'env', '__pycache__',
     'dist', 'build', 'Library', 'System', 'bin', 'usr', 'Applications',
-    '.git', '.idea', '.vscode', 'venv', 'env', '.env', 'anaconda3',
-    '.npm', '.nvm', '.cache', '.local', '.conda', 'AppData', 'Program Files',
-    'Visual Studio Code.app'
+    '.git', '.idea', '.vscode', 'anaconda3', '.npm', '.nvm', '.cache',
+    '.local', '.conda', 'AppData', 'Program Files', 'Visual Studio Code.app'
 }
 
 # Directories where paths should be truncated
@@ -33,7 +32,6 @@ PROJECT_INDICATORS = {
     'Makefile': 'C/C++',
     'main.c': 'C',
     'main.cpp': 'C++',
-    'CMakeLists.txt': 'CMake',
     'build.xml': 'Ant',
     'build.sbt': 'Scala (SBT)',
     'pubspec.yaml': 'Dart (Flutter)',

@@ -1,6 +1,5 @@
 import os
 import platform
-import shutil
 import subprocess
 from send2trash import send2trash
 
@@ -11,8 +10,7 @@ from rich.prompt import Prompt
 from rich.table import Table
 from rich.text import Text
 
-from .scanner import scan_directories, load_index, save_index, clear_index
-from .tui import display_projects
+from .scanner import scan_directories, load_index, clear_index
 
 ASCII_ART = """
  _____                                                                     _____ 
@@ -54,16 +52,14 @@ def scan(system_wide, directory):
     """
     console = Console()
 
-    # Determine base directory for scanning
     if system_wide:
-        base_directory = os.path.expanduser("~")  # Start scanning from the home directory
+        base_directory = os.path.expanduser("~")
     elif directory:
-        base_directory = directory  # Scan from the user-specified directory
+        base_directory = directory
     else:
         console.print("[bold red]Error:[/bold red] You must specify either --system-wide for a full scan or provide a directory to scan.")
         return
 
-    # Scan directories and index projects
     projects = scan_directories(base_directory)
 
     if not projects:
@@ -74,9 +70,7 @@ def scan(system_wide, directory):
 
 @cli.command()
 def clear():
-    """
-    Clear the stored project index.
-    """
+    """Clear the stored project index."""
     clear_index()
     console = Console()
     console.print("Project index has been cleared.", style="bold green")
@@ -85,9 +79,7 @@ def clear():
 @click.option('--search', '-s', help="Search the index by directory name, project type, or path.")
 @click.option('--sort-by', '-b', type=click.Choice(['name', 'type', 'path'], case_sensitive=False), help="Sort the index by directory name, project type, or path.")
 def show_index(search, sort_by):
-    """
-    Display the current project index in a table, with options to search and sort.
-    """
+    """Display the current project index in a table, with options to search and sort."""
     console = Console()
     projects = load_index()
 
@@ -95,21 +87,17 @@ def show_index(search, sort_by):
         console.print("[bold red]No projects are currently indexed.[/bold red]")
         return
 
-    # Apply search filter if specified
     if search:
         search_lower = search.lower()
         projects = [project for project in projects if search_lower in project["directory_name"].lower() or search_lower in project["project_type"].lower() or search_lower in project["path"].lower()]
 
-    # Apply sorting if specified
     if sort_by:
         projects = sorted(projects, key=lambda x: x[sort_by].lower())
 
     display_index(console, projects)
 
 def display_index(console, projects):
-    """
-    Display the indexed projects in a table.
-    """
+    """Display the indexed projects in a table."""
     table = Table(show_header=True, header_style="bold magenta")
     table.add_column("ID", style="dim", width=6)
     table.add_column("Name", style="cyan", no_wrap=True)
@@ -121,30 +109,27 @@ def display_index(console, projects):
 
     console.print(table)
 
-    if projects:
-        selected_id = Prompt.ask("[bold green]Select the project ID to manage[/bold green]", choices=[str(i) for i in range(len(projects))])
-        selected_project = projects[int(selected_id)]
-        
-        action = Prompt.ask(
-            f"[bold green]Selected project:[/bold green] {selected_project['directory_name']} [bold green]({selected_project['path']})[/bold green]\n[bold yellow]Choose an action[/bold yellow]",
-            choices=["open", "pwd", "remove"]
-        )
+    selected_id = Prompt.ask("[bold green]Select the project ID to manage[/bold green]", choices=[str(i) for i in range(len(projects))])
+    selected_project = projects[int(selected_id)]
+    
+    action = Prompt.ask(
+        f"[bold green]Selected project:[/bold green] {selected_project['directory_name']} [bold green]({selected_project['path']})[/bold green]\n[bold yellow]Choose an action[/bold yellow]",
+        choices=["open", "pwd", "remove"]
+    )
 
-        if action == "open":
-            open_folder(selected_project["path"])
-        elif action == "pwd":
-            console.print(f"[bold green]Path:[/bold green] {selected_project['path']}")
-        elif action == "remove":
-            confirm = Prompt.ask("[bold red]Are you sure you want to move this directory to the recycle bin? (yes/no)[/bold red]", choices=["yes", "no"])
-            if confirm == "yes":
-                move_to_recycle_bin(selected_project["path"], console)
-            else:
-                console.print("[bold green]Operation cancelled.[/bold green]")
+    if action == "open":
+        open_folder(selected_project["path"])
+    elif action == "pwd":
+        console.print(f"[bold green]Path:[/bold green] {selected_project['path']}")
+    elif action == "remove":
+        confirm = Prompt.ask("[bold red]Are you sure you want to move this directory to the recycle bin? (yes/no)[/bold red]", choices=["yes", "no"])
+        if confirm == "yes":
+            move_to_recycle_bin(selected_project["path"], console)
+        else:
+            console.print("[bold green]Operation cancelled.[/bold green]")
 
 def open_folder(path):
-    """
-    Open the selected folder in the system's file explorer.
-    """
+    """Open the selected folder in the system's file explorer."""
     if platform.system() == "Windows":
         os.startfile(path)
     elif platform.system() == "Darwin":
@@ -153,9 +138,7 @@ def open_folder(path):
         subprocess.Popen(["xdg-open", path])
 
 def move_to_recycle_bin(path, console):
-    """
-    Move the selected folder to the recycle bin.
-    """
+    """Move the selected folder to the recycle bin."""
     try:
         send2trash(path)
         console.print(f"[bold red]Moved to recycle bin:[/bold red] {path}")
